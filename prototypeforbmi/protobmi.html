@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles can be added here */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple transition for smoother appearance */
+        #result-section {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">BMI Calculator</h1>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Calculate your Body Mass Index</p>
+        </div>
+
+        <!-- Form for user input -->
+        <form id="bmi-form" class="mt-8 space-y-6">
+            <!-- Unit System Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit System</label>
+                <div class="mt-2 flex items-center space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-indigo-600" name="unit" value="metric" checked>
+                        <span class="ml-2 text-gray-700 dark:text-gray-200">Metric (kg, cm)</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-indigo-600" name="unit" value="imperial">
+                        <span class="ml-2 text-gray-700 dark:text-gray-200">Imperial (lbs, in)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Name Input (Optional) -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name (Optional)</label>
+                <input id="name" name="name" type="text" autocomplete="name" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-white">
+            </div>
+
+            <!-- Weight and Height Inputs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Weight</label>
+                    <input id="weight" name="weight" type="number" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-white" placeholder="kg">
+                </div>
+                <div>
+                    <label for="height" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Height</label>
+                    <input id="height" name="height" type="number" required class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-white" placeholder="cm">
+                </div>
+            </div>
+
+            <!-- Calculate Button -->
+            <div>
+                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Calculate BMI
+                </button>
+            </div>
+        </form>
+
+        <!-- Result Section (Initially Hidden) -->
+        <div id="result-section" class="hidden opacity-0 transform -translate-y-4 text-center p-6 rounded-lg">
+            <h3 id="result-name" class="text-xl font-semibold"></h3>
+            <p class="text-5xl font-bold mt-2" id="bmi-value"></p>
+            <p class="text-lg font-medium mt-2" id="bmi-category"></p>
+        </div>
+    </div>
+
+    <script>
+        // DOM element references
+        const form = document.getElementById('bmi-form');
+        const unitRadios = document.getElementsByName('unit');
+        const weightInput = document.getElementById('weight');
+        const heightInput = document.getElementById('height');
+        const nameInput = document.getElementById('name');
+        const resultSection = document.getElementById('result-section');
+        const resultName = document.getElementById('result-name');
+        const bmiValue = document.getElementById('bmi-value');
+        const bmiCategory = document.getElementById('bmi-category');
+
+        // --- Event Listeners ---
+
+        // Listen for changes in the unit system to update placeholders
+        for (const radio of unitRadios) {
+            radio.addEventListener('change', function() {
+                if (this.value === 'metric') {
+                    weightInput.placeholder = 'kg';
+                    heightInput.placeholder = 'cm';
+                } else {
+                    weightInput.placeholder = 'lbs';
+                    heightInput.placeholder = 'in';
+                }
+            });
+        }
+
+        // Listen for form submission to calculate BMI
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent page reload
+
+            const weight = parseFloat(weightInput.value);
+            const height = parseFloat(heightInput.value);
+            const unit = document.querySelector('input[name="unit"]:checked').value;
+            const name = nameInput.value.trim();
+
+            // Input validation
+            if (isNaN(weight) || isNaN(height) || weight <= 0 || height <= 0) {
+                // A more user-friendly error message could be implemented here
+                // For now, we just stop the calculation.
+                return;
+            }
+
+            let bmi;
+            // --- BMI Calculation Logic ---
+            if (unit === 'metric') {
+                // Formula: weight (kg) / [height (m)]^2
+                // We convert height from cm to meters by dividing by 100
+                const heightInMeters = height / 100;
+                bmi = weight / (heightInMeters * heightInMeters);
+            } else { // Imperial
+                // Formula: 703 x weight (lbs) / [height (in)]^2
+                bmi = 703 * (weight / (height * height));
+            }
+
+            // --- Display Results ---
+            displayResult(bmi, name);
+        });
+
+
+        // --- Helper Functions ---
+
+        /**
+         * Displays the calculated BMI result and category.
+         * @param {number} bmi - The calculated Body Mass Index.
+         * @param {string} name - The user's name (optional).
+         */
+        function displayResult(bmi, name) {
+            const roundedBmi = bmi.toFixed(1); // Round to one decimal place
+            let category = '';
+            let categoryColorClass = '';
+
+            // Determine BMI category and corresponding color
+            if (bmi < 18.5) {
+                category = 'Underweight';
+                categoryColorClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+            } else if (bmi >= 18.5 && bmi <= 24.9) {
+                category = 'Normal weight';
+                categoryColorClass = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+            } else if (bmi >= 25 && bmi <= 29.9) {
+                category = 'Overweight';
+                categoryColorClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+            } else { // bmi >= 30
+                category = 'Obesity';
+                categoryColorClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+            }
+
+            // Update the result section content
+            if (name) {
+                resultName.textContent = `${name}, your result is:`;
+                resultName.classList.remove('hidden');
+            } else {
+                resultName.textContent = '';
+                resultName.classList.add('hidden');
+            }
+            bmiValue.textContent = roundedBmi;
+            bmiCategory.textContent = category;
+
+            // Update result section styling and make it visible
+            resultSection.className = 'text-center p-6 rounded-lg'; // Reset classes
+            resultSection.classList.add(...categoryColorClass.split(' '));
+            
+            // Trigger the animation
+            resultSection.classList.remove('hidden');
+            setTimeout(() => {
+                resultSection.classList.remove('opacity-0', 'transform', '-translate-y-4');
+                resultSection.classList.add('opacity-100', 'translate-y-0');
+            }, 10); // Small delay to ensure CSS transition applies
+        }
+    </script>
+
+</body>
+</html>
